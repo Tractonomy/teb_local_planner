@@ -132,8 +132,6 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
         costmap_converter_->setOdomTopic(cfg_->odom_topic);
         costmap_converter_->initialize(intra_proc_node_);
         costmap_converter_->setCostmap2D(costmap_);
-        const auto rate = std::make_shared<rclcpp::Rate>((double)cfg_->obstacles.costmap_converter_rate);
-        costmap_converter_->startWorker(rate, costmap_, cfg_->obstacles.costmap_converter_spin_thread);
         RCLCPP_INFO(logger_, "Costmap conversion plugin %s loaded.", cfg_->obstacles.costmap_converter_plugin.c_str());
       }
       catch(pluginlib::PluginlibException& ex)
@@ -188,6 +186,11 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
   else
   {
     RCLCPP_INFO(logger_, "teb_local_planner has already been initialized, doing nothing.");
+  }
+
+  if (costmap_converter_) {
+    const auto rate = std::make_shared<rclcpp::Rate>((double)cfg_->obstacles.costmap_converter_rate);
+    costmap_converter_->startWorker(rate, costmap_, cfg_->obstacles.costmap_converter_spin_thread);
   }
 }
 
@@ -1099,20 +1102,46 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
   custom_via_points_active_ = !via_points_.empty();
 }
 
-void TebLocalPlannerROS::activate() {
+void TebLocalPlannerROS::activate()
+{
+  RCLCPP_INFO(
+    logger_,
+    "[teb_local_planner] Activating controller: %s of type "
+    "teb_local_planner::TebLocalPlannerROS",
+    name_.c_str());
+
   visualization_->on_activate();
 
   return;
 }
-void TebLocalPlannerROS::deactivate() {
+void TebLocalPlannerROS::deactivate()
+{
+  RCLCPP_INFO(
+    logger_,
+    "[teb_local_planner] Deactivating controller: %s of type "
+    "teb_local_planner::TebLocalPlannerROS",
+    name_.c_str());
+
   visualization_->on_deactivate();
 
   return;
 }
-void TebLocalPlannerROS::cleanup() {
+void TebLocalPlannerROS::cleanup()
+{
+  RCLCPP_INFO(
+    logger_,
+    "[teb_local_planner] Cleaning up controller: %s of type "
+    "teb_local_planner::TebLocalPlannerROS",
+    name_.c_str());
+
   visualization_->on_cleanup();
-  costmap_converter_->stopWorker();
-  
+
+  // optional plugin so need to check if pointer exists
+  if (costmap_converter_) {
+    costmap_converter_->stopWorker();
+    // do not reset pointer, only initialized once in on_configure but not reconfigured
+  }
+
   return;
 }
 
