@@ -87,7 +87,7 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
   {	
     // declare parameters (ros2-dashing)
     intra_proc_node_.reset( 
-            new rclcpp::Node("costmap_converter", node->get_namespace(), 
+            new rclcpp::Node("costmap_converter_" + name_, node->get_namespace(), 
               rclcpp::NodeOptions()));
     cfg_->declareParameters(node, name_);
 
